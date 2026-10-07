@@ -9,18 +9,21 @@ exports.handler = async (event) => {
     const { market, pair, style } = JSON.parse(event.body);
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // Menggunakan model Gemini 1.5 Flash
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
+      generationConfig: { responseMimeType: "application/json" }
+    });
 
     const prompt = `
-    Kamu adalah sistem analisis teknikal otomatis profesional seperti Signalynx.
+    Kamu adalah sistem analisis teknikal otomatis profesional.
     Analisis kondisi pasar saat ini untuk:
     - Kategori Market: ${market}
     - Pair/Instrumen: ${pair}
     - Gaya Trading: ${style}
 
-    Tugasmu: Berikan keputusan sinyal realistis berdasarkan tren harga & indikator teknikal umum (EMA, RSI, ATR).
-
-    Kembalikan respon HANYA dalam format JSON berikut (tanpa tanda markdown \`\`\`json):
+    Berikan keputusan sinyal berdasarkan indikator teknikal.
+    Kembalikan respon JSON wajib menggunakan struktur ini:
     {
       "signal": "BUY",
       "entry": "64980.01",
@@ -29,12 +32,12 @@ exports.handler = async (event) => {
       "tp2": "64448.00",
       "rr": "1:2.0",
       "confidence": "68%",
-      "explanation": "Tuliskan penjelasan teknikal rinci di sini mengenai alasan entry, kondisi EMA, RSI, dan level pembatalan sinyal."
+      "explanation": "Penjelasan analisis teknikal singkat di sini."
     }
     `;
 
     const result = await model.generateContent(prompt);
-    const responseText = result.response.text().replace(/```json|```/g, "").trim();
+    const responseText = result.response.text();
 
     return {
       statusCode: 200,
